@@ -37,7 +37,7 @@ async function scrapeDescriptionPage(Pageurl, page) {
 }
 
 async function main() {
-  const browser = await puppeteer.launch({ headless: false });
+  browser = await puppeteer.launch({ headless: false });
   // Instead of opening multiple pages for each urls - make a single page
   const descriptionPage = await browser.newPage();
   const homes = await scrapeHomesInIndexPage(url);

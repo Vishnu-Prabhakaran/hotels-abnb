@@ -29,6 +29,7 @@ async function scrapeHomesInIndexPage(url) {
 }
 
 async function scrapeDescriptionPage(Pageurl, page) {
+  let roomText;
   try {
     // Consider navigation to be finished when there are no more than 2 network connections for at least 500ms
     await page.goto(Pageurl, { waitUntil: 'networkidle2' });
@@ -40,29 +41,39 @@ async function scrapeDescriptionPage(Pageurl, page) {
 
     // Getting values using regular expression
 
-    const roomtext = $('#room').text();
+    roomText = $('#room').text();
     // d+ means digits greater than 0
-    const guestMatches = roomtext.match(/\d+ guest/);
+    const guestAllowed = returnMatches(roomText, /\d+ guest/);
+    const bedrooms = returnMatches(roomText, /\d+ bedroom/);
+    const bath = returnMatches(roomText, /\d+ (shared )?bath/); // optional if shared is true
+    const bed = returnMatches(roomText, /\d+ bed/);
 
-    let guestAllowed = 'N/A';
-    if (guestMatches != null) {
-      guestAllowed = guestMatches[0];
-    }
-    console.log(pricePerNight);
-    console.log(guestAllowed);
-    return { pricePerNight, guestAllowed };
+    return { Pageurl, pricePerNight, guestAllowed, bedrooms, bath, bed };
   } catch (err) {
+    console.log(roomText);
+    console.log(url);
     console.log(err);
   }
 }
 
+async function returnMatches(roomText, regex) {
+  const regExMatches = roomText.match(regex);
+  let result = 'N/A';
+  if (regExMatches != null) {
+    result = regExMatches[0];
+  } else {
+    throw `No regex matches found for: ${regex}`;
+  }
+  return result;
+}
 async function main() {
   browser = await puppeteer.launch({ headless: false });
   // Instead of opening multiple pages for each urls - make a single page
   const descriptionPage = await browser.newPage();
   const homes = await scrapeHomesInIndexPage(url);
   for (var i = 0; i < homes.length; i++) {
-    await scrapeDescriptionPage(homes[i], descriptionPage);
+    const result = await scrapeDescriptionPage(homes[i], descriptionPage);
+    console.log(result);
   }
 }
 

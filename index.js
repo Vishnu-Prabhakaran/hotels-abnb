@@ -7,7 +7,7 @@ let browser;
 async function scrapeHomesInIndexPage(url) {
   try {
     const page = await browser.newPage();
-    await page.goto(url);
+    await page.goto(url, { waitUntil: 'networkidle2' });
     const html = await page.evaluate(() => document.body.innerHTML);
     const $ = await cheerio.load(html);
     // Element with itemprops
@@ -34,10 +34,23 @@ async function scrapeDescriptionPage(Pageurl, page) {
     await page.goto(Pageurl, { waitUntil: 'networkidle2' });
     const html = await page.evaluate(() => document.body.innerHTML);
     const $ = await cheerio.load(html);
-    const price = $(
+    const pricePerNight = $(
       '#room > div > div > div > div > div > div > div > div > div > div > div > div > div > div > div > div > div > div > div > span > span'
     ).text();
-    console.log(price);
+
+    // Getting values using regular expression
+
+    const roomtext = $('#room').text();
+    // d+ means digits greater than 0
+    const guestMatches = roomtext.match(/\d+ guest/);
+
+    let guestAllowed = 'N/A';
+    if (guestMatches != null) {
+      guestAllowed = guestMatches[0];
+    }
+    console.log(pricePerNight);
+    console.log(guestAllowed);
+    return { pricePerNight, guestAllowed };
   } catch (err) {
     console.log(err);
   }
